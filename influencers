@@ -67,7 +67,7 @@ def draw_graph(pos, adj, values, ax, title="", influencers=None):
     sc = ax.scatter(xs, ys, c=values, vmin=0, vmax=1, cmap="viridis", s=0)
     return sc
 
-N = 20
+N = 40
 p = 0.1
 T = 20
 alpha = 0.5
