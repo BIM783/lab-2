@@ -1,0 +1,72 @@
+import random, math
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+import time
+
+random.seed(int(time.time()))
+
+def er_graph(n, p):
+    adj = [[] for _ in range(n)]
+    for i in range(n):
+        for j in range(i+1, n):
+            if random.random() < p:
+                adj[i].append(j); adj[j].append(i)
+    return adj
+
+def circle_layout(n):
+    return [(math.cos(2*math.pi*k/n), math.sin(2*math.pi*k/n)) for k in range(n)]
+
+def degroot_step(x, adj, alpha_list):
+    x_next = []
+    for i in range(len(x)):
+        if len(adj[i]) == 0:
+            x_next.append(x[i])
+            continue
+        avg = sum(x[j] for j in adj[i]) / len(adj[i])
+        alpha = alpha_list[i]  # берем индивидуальное значение упрямства для агента i
+        x_next.append(alpha*x[i] + (1-alpha)*avg)
+    return x_next
+
+def draw_graph(pos, adj, values, ax, title=""):
+    ax.clear()
+    segs = [[pos[i], pos[j]] for i in range(len(adj)) for j in adj[i] if j>i ]
+    ax.add_collection(LineCollection(segs, colors="lightgray", linewidths=0.8))
+    xs, ys = zip(*pos)
+    sc = ax.scatter(xs, ys, c=values, vmin=0, vmax=1, cmap="viridis", s=100, edgecolors="k")
+    ax.set_title(title); ax.set_aspect("equal"); ax.axis("off")
+    return sc
+
+# Параметры
+N = 20
+p = 0.1
+T = 20
+
+# Создаем двухкластерное распределение упрямства
+alpha_list = [0.1] * (N // 2) + [0.9] * (N - N // 2)
+# Перемешиваем, чтобы упрямые агенты не были сгруппированы
+random.shuffle(alpha_list)
+
+# Создаем граф и начальные условия
+adj = er_graph(N, p)
+pos = circle_layout(N)
+x = [random.random() for _ in range(N)]
+
+# Визуализация
+plt.ion()
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+# Первый график - начальные мнения
+sc1 = draw_graph(pos, adj, x, ax1, "t=0 (Мнения)")
+# Второй график - значения упрямства
+sc2 = draw_graph(pos, adj, alpha_list, ax2, "Упрямство (α)")
+plt.colorbar(sc1, ax=ax1)
+plt.colorbar(sc2, ax=ax2)
+
+for t in range(1, T+1):
+    x = degroot_step(x, adj, alpha_list)
+    sc1.set_array(x)
+    ax1.set_title(f"t={t} (Мнения)")
+    plt.pause(0.2)
+
+plt.ioff()
+plt.show()
