@@ -1,0 +1,58 @@
+
+код: 
+import random, math
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+import time
+
+random.seed(int(time.time()))
+
+def er_graph(n, p):
+    adj = [[] for _ in range(n)]
+    for i in range(n):
+        for j in range(i+1, n):
+            if random.random() < p:
+                adj[i].append(j); adj[j].append(i)
+    return adj
+
+def circle_layout(n):
+    return [(math.cos(2*math.pi*k/n), math.sin(2*math.pi*k/n)) for k in range(n)]
+
+def degroot_step(x, adj, alpha):
+    x_next = []
+    for i in range(len(x)):
+        if len(adj[i]) == 0:
+            x_next.append(x[i]);
+            continue
+        avg = sum(x[j] for j in adj[i]) / len(adj[i])
+        x_next.append(alpha*x[i] + (1-alpha)*avg)
+    return x_next
+
+def draw_graph(pos, adj, values, ax, title=""):
+    ax.clear()
+    segs = [[pos[i], pos[j]] for i in range(len(adj)) for j in adj[i] if j>i ]
+    ax.add_collection(LineCollection(segs, colors="lightgray", linewidths=0.8))
+    xs, ys = zip(*pos)
+    sc = ax.scatter(xs, ys, c=values, vmin=0, vmax=1, cmap="viridis", s=100, edgecolors="k")
+    ax.set_title(title); ax.set_aspect("equal"); ax.axis("off")
+    return sc
+
+N = 20  # предположим значения, так как на фото они не видны
+p = 0.1
+T = 20
+alpha = 0.5
+
+adj = er_graph(N, p)
+pos = circle_layout(N)
+x = [random.random() for _ in range(N)]
+
+plt.ion()
+fig, ax = plt.subplots(figsize=(6,6))
+sc = draw_graph(pos, adj, x, ax, "t=0")
+plt.colorbar(sc, ax=ax)
+for t in range(1, T+1):
+    x = degroot_step(x, adj, alpha)
+    sc.set_array(x)
+    ax.set_title(f"t={t}")
+    plt.pause(0.2)
+plt.ioff(); plt.show()
