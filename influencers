@@ -68,7 +68,7 @@ def draw_graph(pos, adj, values, ax, title="", influencers=None):
     return sc
 
 N = 40
-p = 0.1
+p = 0.07
 T = 20
 alpha = 0.5
 
